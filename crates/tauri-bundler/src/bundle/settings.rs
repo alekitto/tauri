@@ -120,21 +120,13 @@ impl PackageType {
 }
 
 const ALL_PACKAGE_TYPES: &[PackageType] = &[
-  #[cfg(target_os = "linux")]
   PackageType::Deb,
-  #[cfg(target_os = "macos")]
   PackageType::IosBundle,
-  #[cfg(target_os = "windows")]
   PackageType::WindowsMsi,
-  #[cfg(target_os = "windows")]
   PackageType::Nsis,
-  #[cfg(target_os = "macos")]
   PackageType::MacOsBundle,
-  #[cfg(target_os = "linux")]
   PackageType::Rpm,
-  #[cfg(target_os = "macos")]
   PackageType::Dmg,
-  #[cfg(target_os = "linux")]
   PackageType::AppImage,
   PackageType::Updater,
 ];

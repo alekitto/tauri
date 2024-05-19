@@ -44,18 +44,15 @@ pub enum Error {
   #[error("`{0}`")]
   JsonError(#[from] serde_json::error::Error),
   /// Regex error.
-  #[cfg(any(target_os = "macos", windows))]
   #[error("`{0}`")]
   RegexError(#[from] regex::Error),
   /// Failed to perform HTTP request.
   #[error("`{0}`")]
   HttpError(#[from] Box<ureq::Error>),
   /// Invalid glob pattern.
-  #[cfg(windows)]
   #[error("{0}")]
   GlobPattern(#[from] glob::PatternError),
   /// Failed to use glob pattern.
-  #[cfg(windows)]
   #[error("`{0}`")]
   Glob(#[from] glob::GlobError),
   /// Failed to parse the URL
@@ -107,15 +104,12 @@ pub enum Error {
   #[error("failed to sign app: {0}")]
   Sign(String),
   /// time error.
-  #[cfg(target_os = "macos")]
   #[error("`{0}`")]
   TimeError(#[from] time::error::Error),
   /// Plist error.
-  #[cfg(target_os = "macos")]
   #[error(transparent)]
   Plist(#[from] plist::Error),
   /// Rpm error.
-  #[cfg(target_os = "linux")]
   #[error("{0}")]
   RpmError(#[from] rpm::Error),
 }

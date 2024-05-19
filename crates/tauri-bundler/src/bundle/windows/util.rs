@@ -125,7 +125,6 @@ pub fn download(url: &str) -> crate::Result<Vec<u8>> {
 
 #[derive(Clone, Copy)]
 pub enum HashAlgorithm {
-  #[cfg(target_os = "windows")]
   Sha256,
   Sha1,
 }
@@ -144,7 +143,6 @@ pub fn download_and_verify(
 
 pub fn verify_hash(data: &[u8], hash: &str, hash_algorithm: HashAlgorithm) -> crate::Result<()> {
   match hash_algorithm {
-    #[cfg(target_os = "windows")]
     HashAlgorithm::Sha256 => {
       let hasher = sha2::Sha256::new();
       verify_data_with_hasher(data, hash, hasher)
@@ -211,7 +209,6 @@ pub fn extract_zip(data: &[u8], path: &Path) -> crate::Result<()> {
   Ok(())
 }
 
-#[cfg(target_os = "windows")]
 pub fn os_bitness<'a>() -> Option<&'a str> {
   use windows_sys::Win32::System::SystemInformation::{
     GetNativeSystemInfo, PROCESSOR_ARCHITECTURE_AMD64, PROCESSOR_ARCHITECTURE_INTEL, SYSTEM_INFO,

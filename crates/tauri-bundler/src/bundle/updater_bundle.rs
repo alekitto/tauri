@@ -53,7 +53,6 @@ pub fn bundle_project(settings: &Settings, bundles: &[Bundle]) -> crate::Result<
 
 // Create simple update-macos.tar.gz
 // This is the Mac OS App packaged
-#[cfg(target_os = "macos")]
 fn bundle_update_macos(bundles: &[Bundle]) -> crate::Result<Vec<PathBuf>> {
   use std::ffi::OsStr;
 
@@ -89,7 +88,6 @@ fn bundle_update_macos(bundles: &[Bundle]) -> crate::Result<Vec<PathBuf>> {
 // Including the AppImage
 // Right now in linux we hot replace the bin and request a restart
 // No assets are replaced
-#[cfg(target_os = "linux")]
 fn bundle_update_linux(bundles: &[Bundle]) -> crate::Result<Vec<PathBuf>> {
   use std::ffi::OsStr;
 
@@ -126,7 +124,6 @@ fn bundle_update_linux(bundles: &[Bundle]) -> crate::Result<Vec<PathBuf>> {
 // No assets are replaced
 fn bundle_update_windows(settings: &Settings, bundles: &[Bundle]) -> crate::Result<Vec<PathBuf>> {
   use crate::bundle::settings::WebviewInstallMode;
-  #[cfg(target_os = "windows")]
   use crate::bundle::windows::msi;
   use crate::bundle::windows::nsis;
   use crate::PackageType;
@@ -136,7 +133,6 @@ fn bundle_update_windows(settings: &Settings, bundles: &[Bundle]) -> crate::Resu
   let mut rebuild_installers = || -> crate::Result<()> {
     for bundle in bundles {
       match bundle.package_type {
-        #[cfg(target_os = "windows")]
         PackageType::WindowsMsi => bundle_paths.extend(msi::bundle_project(settings, true)?),
         PackageType::Nsis => bundle_paths.extend(nsis::bundle_project(settings, true)?),
         _ => {}
@@ -231,7 +227,6 @@ pub fn create_zip(src_file: &Path, dst_file: &Path) -> crate::Result<PathBuf> {
   Ok(dst_file.to_owned())
 }
 
-#[cfg(any(target_os = "linux", target_os = "macos"))]
 fn create_tar(src_dir: &Path, dest_path: &Path) -> crate::Result<PathBuf> {
   use flate2::{write::GzEncoder, Compression};
 
@@ -245,16 +240,6 @@ fn create_tar(src_dir: &Path, dest_path: &Path) -> crate::Result<PathBuf> {
   Ok(dest_path.to_owned())
 }
 
-#[cfg(target_os = "macos")]
-fn create_tar_from_src<P: AsRef<Path>, W: Write>(src_dir: P, dest_file: W) -> crate::Result<W> {
-  let src_dir = src_dir.as_ref();
-  let mut builder = tar::Builder::new(dest_file);
-  builder.follow_symlinks(false);
-  builder.append_dir_all(src_dir.file_name().expect("Path has no file_name"), src_dir)?;
-  builder.into_inner().map_err(Into::into)
-}
-
-#[cfg(target_os = "linux")]
 fn create_tar_from_src<P: AsRef<Path>, W: Write>(src_dir: P, dest_file: W) -> crate::Result<W> {
   let src_dir = src_dir.as_ref();
   let mut tar_builder = tar::Builder::new(dest_file);

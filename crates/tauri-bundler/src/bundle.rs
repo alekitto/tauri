@@ -5,9 +5,7 @@
 
 mod category;
 mod common;
-#[cfg(target_os = "linux")]
 mod linux;
-#[cfg(target_os = "macos")]
 mod macos;
 mod path_utils;
 mod platform;
@@ -25,7 +23,6 @@ pub use self::{
     SettingsBuilder, Size, UpdaterSettings,
   },
 };
-#[cfg(target_os = "macos")]
 use anyhow::Context;
 pub use settings::{NsisSettings, WindowsSettings, WixLanguage, WixLanguageConfig, WixSettings};
 
@@ -103,12 +100,9 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<Bundle>> {
     }
 
     let bundle_paths = match package_type {
-      #[cfg(target_os = "macos")]
       PackageType::MacOsBundle => macos::app::bundle_project(settings)?,
-      #[cfg(target_os = "macos")]
       PackageType::IosBundle => macos::ios::bundle_project(settings)?,
       // dmg is dependent of MacOsBundle, we send our bundles to prevent rebuilding
-      #[cfg(target_os = "macos")]
       PackageType::Dmg => {
         let bundled = macos::dmg::bundle_project(settings, &bundles)?;
         if !bundled.app.is_empty() {
@@ -120,15 +114,11 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<Bundle>> {
         bundled.dmg
       }
 
-      #[cfg(target_os = "windows")]
       PackageType::WindowsMsi => windows::msi::bundle_project(settings, false)?,
       PackageType::Nsis => windows::nsis::bundle_project(settings, false)?,
 
-      #[cfg(target_os = "linux")]
       PackageType::Deb => linux::debian::bundle_project(settings)?,
-      #[cfg(target_os = "linux")]
       PackageType::Rpm => linux::rpm::bundle_project(settings)?,
-      #[cfg(target_os = "linux")]
       PackageType::AppImage => linux::appimage::bundle_project(settings)?,
       _ => {
         log::warn!("ignoring {}", package_type.short_name());
@@ -149,6 +139,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<Bundle>> {
           package_type,
           PackageType::AppImage
             | PackageType::MacOsBundle
+            | PackageType::Dmg
             | PackageType::Nsis
             | PackageType::WindowsMsi
         )
@@ -177,7 +168,6 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<Bundle>> {
     }
   }
 
-  #[cfg(target_os = "macos")]
   {
     // Clean up .app if only building dmg or updater
     if !package_types.contains(&PackageType::MacOsBundle) {

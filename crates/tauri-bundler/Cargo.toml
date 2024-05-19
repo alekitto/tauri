@@ -45,34 +45,33 @@ dunce = "1"
 url = "2"
 uuid = { version = "1", features = ["v4", "v5"] }
 regex = "1"
-
-[target."cfg(target_os = \"windows\")".dependencies]
 bitness = "0.4"
-windows-registry = "0.3.0"
 glob = "0.3"
-
-[target."cfg(target_os = \"windows\")".dependencies.windows-sys]
-version = "0.59"
-features = ["Win32_System_SystemInformation", "Win32_System_Diagnostics_Debug"]
-
-[target."cfg(target_os = \"macos\")".dependencies]
 icns = { package = "tauri-icns", version = "0.1" }
 time = { version = "0.3", features = ["formatting"] }
 plist = "1"
 tauri-macos-sign = { version = "2.0.1", path = "../tauri-macos-sign" }
-
-[target."cfg(target_os = \"linux\")".dependencies]
 heck = "0.5"
 ar = "0.9.0"
 md5 = "0.7.0"
 rpm = "0.15.0"
+
+[dependencies.windows-sys]
+version = "0.59"
+features = [
+  "Win32_System_SystemInformation",
+  "Win32_System_Diagnostics_Debug"
+]
+
+[target."cfg(target_os = \"windows\")".dependencies]
+windows-registry = "0.3.0"
 
 [lib]
 name = "tauri_bundler"
 path = "src/lib.rs"
 
 [features]
-default = ["rustls"]
-native-tls = ["ureq/native-tls"]
-native-tls-vendored = ["native-tls", "native-tls/vendored"]
-rustls = ["ureq/tls"]
+default = [ "rustls" ]
+native-tls = [ "ureq/native-tls" ]
+native-tls-vendored = [ "native-tls", "native-tls/vendored" ]
+rustls = [ "ureq/tls" ]

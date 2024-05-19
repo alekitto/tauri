@@ -29,16 +29,13 @@ use std::{
 };
 
 // URLS for the NSIS toolchain.
-#[cfg(target_os = "windows")]
 const NSIS_URL: &str =
   "https://github.com/tauri-apps/binary-releases/releases/download/nsis-3/nsis-3.zip";
-#[cfg(target_os = "windows")]
 const NSIS_SHA1: &str = "057e83c7d82462ec394af76c87d06733605543d4";
 const NSIS_TAURI_UTILS_URL: &str =
   "https://github.com/tauri-apps/nsis-tauri-utils/releases/download/nsis_tauri_utils-v0.4.1/nsis_tauri_utils.dll";
 const NSIS_TAURI_UTILS_SHA1: &str = "F99A50209A345185A84D34D0E5F66D04C75FF52F";
 
-#[cfg(target_os = "windows")]
 const NSIS_REQUIRED_FILES: &[&str] = &[
   "makensis.exe",
   "Bin/makensis.exe",
@@ -51,8 +48,6 @@ const NSIS_REQUIRED_FILES: &[&str] = &[
   "Include/nsDialogs.nsh",
   "Include/WinMessages.nsh",
 ];
-#[cfg(not(target_os = "windows"))]
-const NSIS_REQUIRED_FILES: &[&str] = &["Plugins/x86-unicode/nsis_tauri_utils.dll"];
 
 const NSIS_REQUIRED_FILES_HASH: &[(&str, &str, &str, HashAlgorithm)] = &[(
   "Plugins/x86-unicode/nsis_tauri_utils.dll",
@@ -104,7 +99,6 @@ pub fn bundle_project(settings: &Settings, updater: bool) -> crate::Result<Vec<P
 fn get_and_extract_nsis(nsis_toolset_path: &Path, _tauri_tools_path: &Path) -> crate::Result<()> {
   log::info!("Verifying NSIS package");
 
-  #[cfg(target_os = "windows")]
   {
     let data = download_and_verify(NSIS_URL, NSIS_SHA1, HashAlgorithm::Sha1)?;
     log::info!("extracting NSIS");
@@ -179,7 +173,6 @@ fn build_nsis_app_installer(
     .publisher()
     .unwrap_or_else(|| bundle_id.split('.').nth(1).unwrap_or(bundle_id));
 
-  #[cfg(not(target_os = "windows"))]
   {
     let mut dir = dirs::cache_dir().unwrap();
     dir.extend(["tauri", "NSIS", "Plugins", "x86-unicode"]);
@@ -359,7 +352,6 @@ fn build_nsis_app_installer(
   resources_ancestors.pop(); // Last one is always ""
 
   // We need to convert / to \ for nsis to move the files into the correct dirs
-  #[cfg(not(target_os = "windows"))]
   let resources: ResourcesMap = resources
     .into_iter()
     .map(|(r, p)| {
@@ -372,12 +364,10 @@ fn build_nsis_app_installer(
       )
     })
     .collect();
-  #[cfg(not(target_os = "windows"))]
   let resources_ancestors: Vec<PathBuf> = resources_ancestors
     .into_iter()
     .map(|p| p.display().to_string().replace('/', "\\").into())
     .collect();
-  #[cfg(not(target_os = "windows"))]
   let resources_dirs: Vec<PathBuf> = resources_dirs
     .into_iter()
     .map(|p| p.display().to_string().replace('/', "\\").into())
