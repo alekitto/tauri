@@ -80,7 +80,14 @@ pub fn bundle_project(settings: &Settings, bundles: &[Bundle]) -> crate::Result<
   log::info!(action = "Bundling"; "{} ({})", dmg_name, dmg_path.display());
 
   // write the scripts
+  #[cfg(target_os = "macos")]
   write(&bundle_script_path, include_str!("./bundle_dmg"))?;
+  #[cfg(target_os = "linux")]
+  write(
+    &bundle_script_path,
+    include_str!("./bundle_dmg_linux"),
+  )?;
+  #[cfg(target_os = "macos")]
   write(
     support_directory_path.join("template.applescript"),
     include_str!("./template.applescript"),
