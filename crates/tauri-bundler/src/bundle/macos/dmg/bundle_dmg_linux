@@ -219,49 +219,13 @@ if [[ -f "${DMG_TEMP_NAME}" ]]; then
 	rm -f "${DMG_TEMP_NAME}"
 fi
 
-# Using Megabytes since hdiutil fails with very large Byte numbers
-function blocks_to_megabytes() {
-	# Add 1 extra MB, since there's no decimal retention here
-	MB_SIZE=$((($1 * 1024 / 1000 / 1000) + 1))
-	echo $MB_SIZE
-}
-
-function get_size() {
-	# Get block size in disk
-	bytes_size=$(du -s "$1" | sed -e 's/	.*//g')
-	echo $(blocks_to_megabytes "$bytes_size")
-}
-
-# Create the DMG with the specified size or the hdiutil estimation
-DISK_IMAGE_SIZE=$(get_size "$SRC_FOLDER")
-if [[ -n "$DISK_IMAGE_SIZE" ]]; then
-	DISK_IMAGE_SIZE=$(get_size "$SRC_FOLDER")
-fi
-
-LOOP_DEV="$(losetup -f)"
-LOOP_NUM="$(echo $LOOP_DEV | sed 's/\/dev\/loop//')"
-mknod "${LOOP_DEV}" b 7 "${LOOP_NUM}" || true
-
-dd if=/dev/zero of="${DMG_TEMP_NAME}" bs=1M count="$DISK_IMAGE_SIZE"
-mkfs.hfsplus -v "${VOLUME_NAME}" "${DMG_TEMP_NAME}"
-
 # mount the new DMG
-echo "Mounting disk image..."
-MOUNT_DIR="/mnt/${VOLUME_NAME}"
-
-# Unmount leftover dmg if it was mounted previously (e.g. developer mounted dmg, installed app and forgot to unmount it)
-if [[ -d "${MOUNT_DIR}" ]]; then
-  echo "Unmounting previously mounted disk image..."
-  umount "${MOUNT_DIR}" || true
-fi
-
-echo "Mounting disk image..."
+echo "Create temporary folder..."
+MOUNT_DIR=$(tempfile --prefix="${VOLUME_NAME}")
+rm "${MOUNT_DIR}"
 mkdir -p "${MOUNT_DIR}"
 
-echo "Mount directory: $MOUNT_DIR"
-mount -o loop "${DMG_TEMP_NAME}" "${MOUNT_DIR}"
-echo "Device name:     $DEV_NAME"
-
+echo "Temp directory: $MOUNT_DIR"
 rsync -a "${SRC_FOLDER}" "${MOUNT_DIR}"
 
 if [[ -n "$BACKGROUND_FILE" ]]; then
@@ -315,23 +279,9 @@ echo "Done fixing permissions."
 echo "Deleting .fseventsd"
 rm -rf "${MOUNT_DIR}/.fseventsd"
 
-# unmount
-unmounting_attempts=0
-until
-  echo "Unmounting disk image..."
-  (( unmounting_attempts++ ))
-  umount "${MOUNT_DIR}"
-	exit_code=$?
-	(( exit_code ==  0 )) && break            # nothing goes wrong
-	(( exit_code != 16 )) && exit $exit_code  # exit with the original exit code
-	# The above statement returns 1 if test failed (exit_code == 16).
-	#   It can make the code in the {do... done} block to be executed
-do
-  (( unmounting_attempts == MAXIMUM_UNMOUNTING_ATTEMPTS )) && exit 16  # patience exhausted, exit with code EBUSY
-	echo "Wait a moment..."
-  sleep $(( 1 * (2 ** unmounting_attempts) ))
-done
-unset unmounting_attempts
+# Generate ISO file
+genisoimage -D -V "${VOLUME_NAME}" -no-pad -r -o "${DMG_TEMP_NAME}" "${MOUNT_DIR}"
+rm -rf "${MOUNT_DIR}"
 
 # compress image
 echo "Compressing disk image..."
