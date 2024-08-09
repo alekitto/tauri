@@ -209,6 +209,7 @@ pub fn extract_zip(data: &[u8], path: &Path) -> crate::Result<()> {
   Ok(())
 }
 
+#[cfg(windows)]
 pub fn os_bitness<'a>() -> Option<&'a str> {
   use windows_sys::Win32::System::SystemInformation::{
     GetNativeSystemInfo, PROCESSOR_ARCHITECTURE_AMD64, PROCESSOR_ARCHITECTURE_INTEL, SYSTEM_INFO,

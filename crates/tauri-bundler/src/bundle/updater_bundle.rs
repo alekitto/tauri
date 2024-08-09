@@ -39,12 +39,14 @@ pub fn bundle_project(settings: &Settings, bundles: &[Bundle]) -> crate::Result<
     return bundle_update_windows(settings, bundles);
   }
 
-  #[cfg(target_os = "macos")]
-  return bundle_update_macos(bundles);
-  #[cfg(target_os = "linux")]
-  return bundle_update_linux(bundles);
+  if target_os == "macos" {
+    return bundle_update_macos(bundles);
+  }
 
-  #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+  if target_os == "linux" {
+    return bundle_update_linux(bundles);
+  }
+
   {
     log::error!("Current platform does not support updates");
     Ok(vec![])

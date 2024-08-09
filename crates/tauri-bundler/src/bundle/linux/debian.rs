@@ -33,9 +33,14 @@ use walkdir::WalkDir;
 use std::{
   fs::{self, File, OpenOptions},
   io::{self, Write},
-  os::unix::fs::{MetadataExt, OpenOptionsExt},
   path::{Path, PathBuf},
 };
+
+#[cfg(unix)]
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+
+#[cfg(windows)]
+use std::os::windows::fs::MetadataExt;
 
 /// Bundles the project.
 /// Returns a vector of PathBuf that shows where the DEB was created.
@@ -280,12 +285,16 @@ fn generate_scripts(settings: &Settings, control_dir: &Path) -> crate::Result<()
 
 fn create_script_file_from_path(from: &PathBuf, to: &PathBuf) -> crate::Result<()> {
   let mut from = File::open(from)?;
-  let mut file = OpenOptions::new()
-    .create(true)
-    .truncate(true)
-    .write(true)
-    .mode(0o755)
-    .open(to)?;
+
+  let mut open_options = OpenOptions::new();
+  open_options.create(true).truncate(true).write(true);
+
+  #[cfg(unix)]
+  {
+    open_options.mode(0o755);
+  }
+
+  let mut file = open_options.open(to)?;
   std::io::copy(&mut from, &mut file)?;
   Ok(())
 }
@@ -357,7 +366,10 @@ fn create_tar_from_dir<P: AsRef<Path>, W: Write>(src_dir: P, dest_file: W) -> cr
     let stat = fs::metadata(src_path)?;
     let mut header = tar::Header::new_gnu();
     header.set_metadata_in_mode(&stat, HeaderMode::Deterministic);
+    #[cfg(unix)]
     header.set_mtime(stat.mtime() as u64);
+    #[cfg(windows)]
+    header.set_mtime(stat.last_write_time());
 
     if entry.file_type().is_dir() {
       tar_builder.append_data(&mut header, dest_path, &mut io::empty())?;
